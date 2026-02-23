@@ -1,0 +1,336 @@
+:root {
+  --ezdp-bg: #ffffff;
+  --ezdp-surface: #f8fafc;
+  --ezdp-border: #dbe3ee;
+  --ezdp-text: #0f172a;
+  --ezdp-muted: #64748b;
+  --ezdp-primary: #0f766e;
+  --ezdp-primary-strong: #0b5f59;
+  --ezdp-primary-soft: #d9f3f0;
+  --ezdp-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+}
+
+.ezdp {
+  position: relative;
+  width: 280px;
+  font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+}
+
+.ezdp-input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--ezdp-border);
+  background: linear-gradient(180deg, #ffffff, #f9fbfd);
+  color: var(--ezdp-text);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ezdp-input:hover,
+.ezdp-input:focus-visible {
+  border-color: #8ebdb8;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  outline: none;
+}
+
+.ezdp-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ezdp-placeholder {
+  color: var(--ezdp-muted);
+}
+
+.ezdp-value {
+  color: var(--ezdp-text);
+  font-weight: 500;
+}
+
+.ezdp-icon {
+  color: #4d6277;
+  display: inline-flex;
+}
+
+.ezdp-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 300px;
+  border: 1px solid var(--ezdp-border);
+  border-radius: 16px;
+  background: var(--ezdp-bg);
+  box-shadow: var(--ezdp-shadow);
+  padding: 12px;
+  z-index: 50;
+}
+
+.ezdp-panel.is-range-mode {
+  width: 332px;
+}
+
+.ezdp-panel.is-two-months {
+  width: 648px;
+}
+
+.ezdp-header {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ezdp-range-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ezdp-range-pill {
+  border: 1px solid #d7e6f2;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #fbfdff, #f3f8fd);
+  padding: 6px 8px;
+  display: grid;
+  gap: 2px;
+}
+
+.ezdp-range-pill span {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6a7b8e;
+}
+
+.ezdp-range-pill strong {
+  font-size: 12px;
+  color: #183247;
+  font-weight: 700;
+}
+
+.ezdp-range-hint {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: #35566b;
+  background: #f0f7ff;
+  border: 1px solid #d7e7f8;
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+
+.ezdp-month {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ezdp-text);
+}
+
+.ezdp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--ezdp-border);
+  border-radius: 10px;
+  background: #fff;
+  color: #39556a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ezdp-nav:hover {
+  border-color: #8ebdb8;
+  color: var(--ezdp-primary);
+}
+
+.ezdp-weekdays,
+.ezdp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ezdp-calendars {
+  display: grid;
+  gap: 10px;
+}
+
+.ezdp-calendars.is-two-months {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ezdp-calendar {
+  border: 1px solid #e5edf6;
+  border-radius: 12px;
+  padding: 8px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+}
+
+.ezdp-submonth {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #27445a;
+  margin-bottom: 8px;
+}
+
+.ezdp-weekdays {
+  margin-bottom: 8px;
+}
+
+.ezdp-weekday {
+  text-align: center;
+  color: var(--ezdp-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 0;
+}
+
+.ezdp-day {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--ezdp-surface);
+  color: #223348;
+  height: 34px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ezdp-day:hover {
+  border-color: #8ebdb8;
+  background: #eef8f6;
+}
+
+.ezdp-day.is-outside {
+  color: #9aa9bb;
+  background: #fcfdff;
+}
+
+.ezdp-day.is-outside-hidden {
+  visibility: hidden;
+  pointer-events: none;
+  background: transparent;
+  border-color: transparent;
+}
+
+.ezdp-day.is-today {
+  border-color: #9ad0ca;
+}
+
+.ezdp-day.is-selected {
+  background: linear-gradient(180deg, var(--ezdp-primary), var(--ezdp-primary-strong));
+  color: #fff;
+  border-color: transparent;
+}
+
+.ezdp-day.is-in-range {
+  background: linear-gradient(180deg, #e7f8f5, #dcf3ef);
+  color: #0b4f49;
+  border-color: #c6e8e3;
+  border-radius: 8px;
+}
+
+.ezdp-day.is-range-start,
+.ezdp-day.is-range-end {
+  background: linear-gradient(180deg, var(--ezdp-primary), var(--ezdp-primary-strong));
+  color: #fff;
+  border-color: transparent;
+}
+
+.ezdp-day.is-range-start {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.ezdp-day.is-range-end {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.ezdp-day.is-preview {
+  background: linear-gradient(180deg, #f0fbf9, #e6f7f4);
+  color: #0c5d56;
+  border-color: #9bd8d0;
+}
+
+.ezdp-day.is-preview.is-range-start,
+.ezdp-day.is-preview.is-range-end {
+  background: linear-gradient(180deg, #148f84, #0f766e);
+  color: #fff;
+}
+
+.ezdp-day.is-disabled,
+.ezdp-day:disabled {
+  cursor: not-allowed;
+  color: #b4bfcc;
+  background: #f7f9fc;
+  border-color: transparent;
+}
+
+.ezdp-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #edf2f7;
+}
+
+.ezdp-action {
+  border: none;
+  background: transparent;
+  color: var(--ezdp-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+
+.ezdp-action:hover {
+  background: var(--ezdp-primary-soft);
+}
+
+.ezdp-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ezdp-clear {
+  color: #b42318;
+}
+
+@media (max-width: 480px) {
+  .ezdp {
+    width: 100%;
+  }
+
+  .ezdp-panel {
+    width: 100%;
+    min-width: 280px;
+    left: 0;
+    right: 0;
+  }
+
+  .ezdp-panel.is-range-mode {
+    width: 100%;
+  }
+
+  .ezdp-panel.is-two-months {
+    width: 100%;
+  }
+
+  .ezdp-calendars.is-two-months {
+    grid-template-columns: 1fr;
+  }
+}
