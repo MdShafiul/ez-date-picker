@@ -1,276 +1,77 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./styles.css";
+import {
+  WEEKDAYS_MON_FIRST,
+  WEEKDAYS_SUN_FIRST,
+  addMonths,
+  formatInputDate,
+  formatRangeValue,
+  getCalendarDays,
+  isBetween,
+  isDateDisabled,
+  isSameDay,
+  normalizePresetRange,
+  normalizeRange,
+  orderDates,
+  startOfDay
+} from "./date-picker/date-utils";
+import { DEFAULT_RANGE_PRESETS, DEFAULT_SINGLE_PRESETS } from "./date-picker/presets";
+import { buildThemedStyle } from "./date-picker/theme";
+import type {
+  CalendarMonth,
+  DatePickerProps,
+  DateRange,
+  DatePickerTheme,
+  PresetContext,
+  RangeDatePreset,
+  ResolvedRangeDatePreset,
+  ResolvedSingleDatePreset,
+  SingleDatePreset
+} from "./date-picker/types";
 
-type CalendarDay = {
-  date: Date;
-  currentMonth: boolean;
-};
+export type {
+  DatePickerProps,
+  DateRange,
+  DatePickerTheme,
+  PresetContext,
+  RangeDatePreset,
+  SingleDatePreset
+} from "./date-picker/types";
 
-type PresetContext = {
-  today: Date;
-  startWeekOnMonday: boolean;
-};
-
-export type SingleDatePreset = {
-  id: string;
-  label: string;
-  date?: Date;
-  getDate?: (context: PresetContext) => Date;
-};
-
-export type RangeDatePreset = {
-  id: string;
-  label: string;
-  range?: DateRange;
-  getRange?: (context: PresetContext) => DateRange;
-};
-
-export type DatePickerTheme = {
-  background: string;
-  surface: string;
-  border: string;
-  text: string;
-  muted: string;
-  primary: string;
-  primaryStrong: string;
-  primarySoft: string;
-  shadow: string;
-  fontFamily: string;
-  inputRadius: string;
-  panelRadius: string;
-  dayRadius: string;
-};
-
-export type DatePickerProps = {
-  mode?: "single" | "range";
-  showRangeMeta?: boolean;
-  rangeMonthsToShow?: 1 | 2;
-  theme?: Partial<DatePickerTheme>;
-  showPresetPanel?: boolean;
-  presetPanelTitle?: string;
-  singlePresetLabel?: string;
-  rangePresetLabel?: string;
-  singlePresets?: SingleDatePreset[];
-  rangePresets?: RangeDatePreset[];
-  value?: Date | null;
-  onChange?: (date: Date | null) => void;
-  rangeValue?: DateRange | null;
-  onRangeChange?: (range: DateRange | null) => void;
-  placeholder?: string;
-  minDate?: Date;
-  maxDate?: Date;
-  disabled?: boolean;
-  className?: string;
-  style?: React.CSSProperties;
-  locale?: string;
-  startWeekOnMonday?: boolean;
-};
-
-export type DateRange = {
-  start: Date | null;
-  end: Date | null;
-};
-
-const WEEKDAYS_SUN_FIRST = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const WEEKDAYS_MON_FIRST = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-function startOfDay(date: Date): Date {
-  const next = new Date(date);
-  next.setHours(0, 0, 0, 0);
-  return next;
+function resolveSinglePresets(
+  presets: SingleDatePreset[],
+  context: PresetContext
+): ResolvedSingleDatePreset[] {
+  return presets
+    .map((preset) => {
+      const rawDate = preset.getDate ? preset.getDate(context) : preset.date;
+      if (!rawDate) return null;
+      return {
+        id: preset.id,
+        label: preset.label,
+        date: startOfDay(rawDate)
+      };
+    })
+    .filter((preset): preset is ResolvedSingleDatePreset => !!preset);
 }
 
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+function resolveRangePresets(
+  presets: RangeDatePreset[],
+  context: PresetContext
+): ResolvedRangeDatePreset[] {
+  return presets
+    .map((preset) => {
+      const rawRange = preset.getRange ? preset.getRange(context) : preset.range;
+      const normalized = normalizePresetRange(rawRange);
+      if (!normalized) return null;
+      return {
+        id: preset.id,
+        label: preset.label,
+        range: normalized
+      };
+    })
+    .filter((preset): preset is ResolvedRangeDatePreset => !!preset);
 }
-
-function isDateDisabled(date: Date, minDate?: Date, maxDate?: Date): boolean {
-  const normalized = startOfDay(date).getTime();
-  if (minDate && normalized < startOfDay(minDate).getTime()) return true;
-  if (maxDate && normalized > startOfDay(maxDate).getTime()) return true;
-  return false;
-}
-
-function getCalendarDays(monthDate: Date, startWeekOnMonday: boolean): CalendarDay[] {
-  const year = monthDate.getFullYear();
-  const month = monthDate.getMonth();
-  const firstOfMonth = new Date(year, month, 1);
-  const lastOfMonth = new Date(year, month + 1, 0);
-
-  let firstWeekday = firstOfMonth.getDay();
-  if (startWeekOnMonday) {
-    firstWeekday = (firstWeekday + 6) % 7;
-  }
-
-  const days: CalendarDay[] = [];
-
-  for (let i = firstWeekday; i > 0; i -= 1) {
-    const date = new Date(year, month, 1 - i);
-    days.push({ date, currentMonth: false });
-  }
-
-  for (let d = 1; d <= lastOfMonth.getDate(); d += 1) {
-    days.push({ date: new Date(year, month, d), currentMonth: true });
-  }
-
-  const trailing = (7 - (days.length % 7)) % 7;
-  for (let i = 1; i <= trailing; i += 1) {
-    const date = new Date(year, month + 1, i);
-    days.push({ date, currentMonth: false });
-  }
-
-  return days;
-}
-
-function formatInputDate(value: Date | null | undefined, locale: string): string {
-  if (!value) return "";
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit"
-  }).format(value);
-}
-
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return startOfDay(next);
-}
-
-function startOfWeek(date: Date, startWeekOnMonday: boolean): Date {
-  const day = date.getDay();
-  const diff = startWeekOnMonday ? (day + 6) % 7 : day;
-  return addDays(date, -diff);
-}
-
-function endOfWeek(date: Date, startWeekOnMonday: boolean): Date {
-  return addDays(startOfWeek(date, startWeekOnMonday), 6);
-}
-
-function startOfMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function endOfMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
-}
-
-function formatRangeValue(range: DateRange | null | undefined, locale: string): string {
-  if (!range?.start && !range?.end) return "";
-  if (range?.start && range?.end) {
-    return `${formatInputDate(range.start, locale)} - ${formatInputDate(range.end, locale)}`;
-  }
-  if (range?.start) {
-    return `${formatInputDate(range.start, locale)} - ...`;
-  }
-  return "";
-}
-
-function normalizeRange(range: DateRange | null | undefined): DateRange | null {
-  if (!range) return null;
-  return {
-    start: range.start ? startOfDay(range.start) : null,
-    end: range.end ? startOfDay(range.end) : null
-  };
-}
-
-function normalizePresetRange(range: DateRange | null | undefined): { start: Date; end: Date } | null {
-  if (!range?.start || !range?.end) return null;
-  const [start, end] = orderDates(startOfDay(range.start), startOfDay(range.end));
-  return { start, end };
-}
-
-function isBetween(date: Date, start: Date, end: Date): boolean {
-  const value = startOfDay(date).getTime();
-  const startTime = startOfDay(start).getTime();
-  const endTime = startOfDay(end).getTime();
-  return value > startTime && value < endTime;
-}
-
-function orderDates(a: Date, b: Date): [Date, Date] {
-  return a.getTime() <= b.getTime() ? [a, b] : [b, a];
-}
-
-function addMonths(date: Date, amount: number): Date {
-  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
-}
-
-const THEME_VAR_MAP: Record<keyof DatePickerTheme, string> = {
-  background: "--ezdp-bg",
-  surface: "--ezdp-surface",
-  border: "--ezdp-border",
-  text: "--ezdp-text",
-  muted: "--ezdp-muted",
-  primary: "--ezdp-primary",
-  primaryStrong: "--ezdp-primary-strong",
-  primarySoft: "--ezdp-primary-soft",
-  shadow: "--ezdp-shadow",
-  fontFamily: "--ezdp-font-family",
-  inputRadius: "--ezdp-input-radius",
-  panelRadius: "--ezdp-panel-radius",
-  dayRadius: "--ezdp-day-radius"
-};
-
-const DEFAULT_SINGLE_PRESETS: SingleDatePreset[] = [
-  {
-    id: "yesterday",
-    label: "Yesterday",
-    getDate: ({ today }) => addDays(today, -1)
-  },
-  {
-    id: "today",
-    label: "Today",
-    getDate: ({ today }) => today
-  },
-  {
-    id: "tomorrow",
-    label: "Tomorrow",
-    getDate: ({ today }) => addDays(today, 1)
-  }
-];
-
-const DEFAULT_RANGE_PRESETS: RangeDatePreset[] = [
-  {
-    id: "last-week",
-    label: "Last Week",
-    getRange: ({ today, startWeekOnMonday }) => {
-      const currentWeekStart = startOfWeek(today, startWeekOnMonday);
-      const start = addDays(currentWeekStart, -7);
-      const end = addDays(currentWeekStart, -1);
-      return { start, end };
-    }
-  },
-  {
-    id: "last-month",
-    label: "Last Month",
-    getRange: ({ today }) => {
-      const month = addMonths(today, -1);
-      return { start: startOfMonth(month), end: endOfMonth(month) };
-    }
-  },
-  {
-    id: "next-week",
-    label: "Next Week",
-    getRange: ({ today, startWeekOnMonday }) => {
-      const currentWeekEnd = endOfWeek(today, startWeekOnMonday);
-      const start = addDays(currentWeekEnd, 1);
-      const end = addDays(start, 6);
-      return { start, end };
-    }
-  },
-  {
-    id: "next-month",
-    label: "Next Month",
-    getRange: ({ today }) => {
-      const month = addMonths(today, 1);
-      return { start: startOfMonth(month), end: endOfMonth(month) };
-    }
-  }
-];
 
 export function DatePicker({
   mode = "single",
@@ -298,6 +99,8 @@ export function DatePicker({
 }: DatePickerProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
   const normalizedSingleValue = useMemo(() => (value ? startOfDay(value) : null), [value]);
   const normalizedRangeValue = useMemo(() => normalizeRange(rangeValue), [rangeValue]);
   const singleValueTime = normalizedSingleValue?.getTime() ?? null;
@@ -311,30 +114,24 @@ export function DatePicker({
     }
     return normalizedSingleValue ?? new Date();
   });
-  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const today = useMemo(() => startOfDay(new Date()), []);
-  const themedStyle = useMemo(() => {
-    if (!theme) return style;
-    const nextStyle: React.CSSProperties = { ...(style ?? {}) };
-    (Object.keys(THEME_VAR_MAP) as Array<keyof DatePickerTheme>).forEach((token) => {
-      const value = theme[token];
-      if (!value) return;
-      const varName = THEME_VAR_MAP[token];
-      (nextStyle as Record<string, string>)[varName] = value;
-    });
-    return nextStyle;
-  }, [theme, style]);
+  const themedStyle = useMemo(() => buildThemedStyle(theme, style), [theme, style]);
   const monthsToShow = mode === "range" ? rangeMonthsToShow : 1;
+
   const presetContext = useMemo(
     () => ({ today, startWeekOnMonday }),
     [today, startWeekOnMonday]
   );
+
+  const weekdayLabels = startWeekOnMonday ? WEEKDAYS_MON_FIRST : WEEKDAYS_SUN_FIRST;
+
   const displayValue =
     mode === "range"
       ? formatRangeValue(normalizedRangeValue, locale)
       : formatInputDate(normalizedSingleValue, locale);
-  const calendarMonths = useMemo(
+
+  const calendarMonths = useMemo<CalendarMonth[]>(
     () =>
       Array.from({ length: monthsToShow }, (_, index) => {
         const monthDate = addMonths(viewMonth, index);
@@ -350,23 +147,67 @@ export function DatePicker({
     [monthsToShow, viewMonth, locale, startWeekOnMonday]
   );
 
-  useEffect(() => {
-    let target: Date | null = null;
+  const monthLabel =
+    monthsToShow === 2
+      ? `${calendarMonths[0]?.monthLabel ?? ""} - ${calendarMonths[1]?.monthLabel ?? ""}`
+      : calendarMonths[0]?.monthLabel ?? "";
 
-    if (mode === "range") {
-      target = normalizedRangeValue?.start ?? normalizedRangeValue?.end ?? null;
-    } else {
-      target = normalizedSingleValue;
+  const [effectiveRangeStart, effectiveRangeEnd] = useMemo(() => {
+    if (mode !== "range") return [null, null] as const;
+    if (normalizedRangeValue?.start && normalizedRangeValue?.end) {
+      return orderDates(normalizedRangeValue.start, normalizedRangeValue.end);
     }
+    if (normalizedRangeValue?.start && hoveredDate) {
+      return orderDates(normalizedRangeValue.start, hoveredDate);
+    }
+    return [normalizedRangeValue?.start ?? null, null] as const;
+  }, [mode, rangeStartTime, rangeEndTime, hoveredDateTime]);
+
+  const rangeHasSelection = !!normalizedRangeValue?.start || !!normalizedRangeValue?.end;
+  const isPickingRangeEnd =
+    mode === "range" && !!normalizedRangeValue?.start && !normalizedRangeValue?.end;
+  const rangeHelperText =
+    mode !== "range"
+      ? ""
+      : isPickingRangeEnd
+        ? "Select an end date"
+        : rangeHasSelection
+          ? "Range selected"
+          : "Select start date";
+
+  const resolvedSinglePresets = useMemo(
+    () => resolveSinglePresets(singlePresets ?? DEFAULT_SINGLE_PRESETS, presetContext),
+    [singlePresets, presetContext]
+  );
+
+  const resolvedRangePresets = useMemo(
+    () => resolveRangePresets(rangePresets ?? DEFAULT_RANGE_PRESETS, presetContext),
+    [rangePresets, presetContext]
+  );
+
+  const isSinglePresetActive = (date: Date): boolean =>
+    !!normalizedSingleValue && isSameDay(normalizedSingleValue, date);
+
+  const isRangePresetActive = (presetRange: { start: Date; end: Date }): boolean =>
+    !!effectiveRangeStart &&
+    !!effectiveRangeEnd &&
+    isSameDay(effectiveRangeStart, presetRange.start) &&
+    isSameDay(effectiveRangeEnd, presetRange.end);
+
+  useEffect(() => {
+    const target =
+      mode === "range"
+        ? normalizedRangeValue?.start ?? normalizedRangeValue?.end ?? null
+        : normalizedSingleValue;
 
     if (!target) return;
 
     const nextMonth = new Date(target.getFullYear(), target.getMonth(), 1);
     setViewMonth((prev) => {
-      const sameMonth =
+      const isSameMonth =
         prev.getFullYear() === nextMonth.getFullYear() &&
         prev.getMonth() === nextMonth.getMonth();
-      return sameMonth ? prev : nextMonth;
+      return isSameMonth ? prev : nextMonth;
     });
   }, [mode, singleValueTime, rangeStartTime, rangeEndTime]);
 
@@ -381,6 +222,7 @@ export function DatePicker({
     if (isOpen) {
       document.addEventListener("mousedown", onDocumentClick);
     }
+
     return () => {
       document.removeEventListener("mousedown", onDocumentClick);
     };
@@ -391,70 +233,6 @@ export function DatePicker({
       setHoveredDate(null);
     }
   }, [isOpen]);
-
-  const monthLabel =
-    monthsToShow === 2
-      ? `${calendarMonths[0]?.monthLabel ?? ""} - ${calendarMonths[1]?.monthLabel ?? ""}`
-      : calendarMonths[0]?.monthLabel ?? "";
-
-  const weekdayLabels = startWeekOnMonday ? WEEKDAYS_MON_FIRST : WEEKDAYS_SUN_FIRST;
-  const rangeHasSelection = !!normalizedRangeValue?.start || !!normalizedRangeValue?.end;
-  const isPickingRangeEnd =
-    mode === "range" && !!normalizedRangeValue?.start && !normalizedRangeValue?.end;
-  const [effectiveRangeStart, effectiveRangeEnd] = useMemo(() => {
-    if (mode !== "range") return [null, null] as const;
-    if (normalizedRangeValue?.start && normalizedRangeValue?.end) {
-      return orderDates(normalizedRangeValue.start, normalizedRangeValue.end);
-    }
-    if (normalizedRangeValue?.start && hoveredDate) {
-      return orderDates(normalizedRangeValue.start, hoveredDate);
-    }
-    return [normalizedRangeValue?.start ?? null, null] as const;
-  }, [mode, rangeStartTime, rangeEndTime, hoveredDateTime]);
-
-  const rangeHelperText =
-    mode !== "range"
-      ? ""
-      : isPickingRangeEnd
-        ? "Select an end date"
-        : rangeHasSelection
-          ? "Range selected"
-          : "Select start date";
-
-  const resolvedSinglePresets = useMemo(() => {
-    const source = singlePresets ?? DEFAULT_SINGLE_PRESETS;
-    return source
-      .map((preset) => {
-        const rawDate = preset.getDate ? preset.getDate(presetContext) : preset.date;
-        if (!rawDate) return null;
-        return { id: preset.id, label: preset.label, date: startOfDay(rawDate) };
-      })
-      .filter((preset): preset is { id: string; label: string; date: Date } => !!preset);
-  }, [singlePresets, presetContext]);
-
-  const resolvedRangePresets = useMemo(() => {
-    const source = rangePresets ?? DEFAULT_RANGE_PRESETS;
-    return source
-      .map((preset) => {
-        const rawRange = preset.getRange ? preset.getRange(presetContext) : preset.range;
-        const normalized = normalizePresetRange(rawRange);
-        if (!normalized) return null;
-        return { id: preset.id, label: preset.label, range: normalized };
-      })
-      .filter(
-        (preset): preset is { id: string; label: string; range: { start: Date; end: Date } } =>
-          !!preset
-      );
-  }, [rangePresets, presetContext]);
-
-  const isSinglePresetActive = (date: Date): boolean =>
-    !!normalizedSingleValue && isSameDay(normalizedSingleValue, date);
-
-  const isRangePresetActive = (presetRange: { start: Date; end: Date }): boolean =>
-    !!effectiveRangeStart &&
-    !!effectiveRangeEnd &&
-    isSameDay(effectiveRangeStart, presetRange.start) &&
-    isSameDay(effectiveRangeEnd, presetRange.end);
 
   const handleSelectDate = (date: Date): void => {
     if (isDateDisabled(date, minDate, maxDate)) return;
@@ -488,12 +266,34 @@ export function DatePicker({
     setIsOpen(false);
   };
 
+  const handleSinglePreset = (date: Date): void => {
+    if (isDateDisabled(date, minDate, maxDate)) return;
+    const normalizedDate = startOfDay(date);
+    onChange?.(normalizedDate);
+    setViewMonth(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), 1));
+    setIsOpen(false);
+  };
+
+  const handleRangePreset = (range: { start: Date; end: Date }): void => {
+    if (
+      isDateDisabled(range.start, minDate, maxDate) ||
+      isDateDisabled(range.end, minDate, maxDate)
+    ) {
+      return;
+    }
+
+    setHoveredDate(null);
+    onRangeChange?.({ start: range.start, end: range.end });
+    setViewMonth(new Date(range.start.getFullYear(), range.start.getMonth(), 1));
+    setIsOpen(false);
+  };
+
   const handlePrevMonth = (): void => {
-    setViewMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+    setViewMonth((prev) => addMonths(prev, -1));
   };
 
   const handleNextMonth = (): void => {
-    setViewMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    setViewMonth((prev) => addMonths(prev, 1));
   };
 
   const handleToday = (): void => {
@@ -512,29 +312,13 @@ export function DatePicker({
 
   const handleClear = (): void => {
     setHoveredDate(null);
+
     if (mode === "range") {
       onRangeChange?.({ start: null, end: null });
       return;
     }
+
     onChange?.(null);
-  };
-
-  const handleSinglePreset = (date: Date): void => {
-    if (isDateDisabled(date, minDate, maxDate)) return;
-    const normalizedDate = startOfDay(date);
-    onChange?.(normalizedDate);
-    setViewMonth(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), 1));
-    setIsOpen(false);
-  };
-
-  const handleRangePreset = (range: { start: Date; end: Date }): void => {
-    if (isDateDisabled(range.start, minDate, maxDate) || isDateDisabled(range.end, minDate, maxDate)) {
-      return;
-    }
-    setHoveredDate(null);
-    onRangeChange?.({ start: range.start, end: range.end });
-    setViewMonth(new Date(range.start.getFullYear(), range.start.getMonth(), 1));
-    setIsOpen(false);
   };
 
   return (
@@ -574,7 +358,12 @@ export function DatePicker({
           aria-label="Date picker calendar"
         >
           <div className="ezdp-header">
-            <button type="button" className="ezdp-nav" onClick={handlePrevMonth} aria-label="Previous month">
+            <button
+              type="button"
+              className="ezdp-nav"
+              onClick={handlePrevMonth}
+              aria-label="Previous month"
+            >
               <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                 <path
                   d="M14.7 5.3a1 1 0 0 1 0 1.4L9.41 12l5.3 5.3a1 1 0 1 1-1.42 1.4l-6-6a1 1 0 0 1 0-1.4l6-6a1 1 0 0 1 1.41 0Z"
@@ -626,12 +415,12 @@ export function DatePicker({
                   {mode === "single" &&
                     resolvedSinglePresets.map((preset) => {
                       const disabledPreset = isDateDisabled(preset.date, minDate, maxDate);
-                      const activePreset = isSinglePresetActive(preset.date);
+                      const isActive = isSinglePresetActive(preset.date);
                       return (
                         <button
                           key={preset.id}
                           type="button"
-                          className={["ezdp-preset", activePreset && "is-active"].filter(Boolean).join(" ")}
+                          className={["ezdp-preset", isActive && "is-active"].filter(Boolean).join(" ")}
                           onClick={() => handleSinglePreset(preset.date)}
                           disabled={disabledPreset}
                         >
@@ -645,12 +434,12 @@ export function DatePicker({
                       const disabledPreset =
                         isDateDisabled(preset.range.start, minDate, maxDate) ||
                         isDateDisabled(preset.range.end, minDate, maxDate);
-                      const activePreset = isRangePresetActive(preset.range);
+                      const isActive = isRangePresetActive(preset.range);
                       return (
                         <button
                           key={preset.id}
                           type="button"
-                          className={["ezdp-preset", activePreset && "is-active"].filter(Boolean).join(" ")}
+                          className={["ezdp-preset", isActive && "is-active"].filter(Boolean).join(" ")}
                           onClick={() => handleRangePreset(preset.range)}
                           disabled={disabledPreset}
                         >
@@ -667,10 +456,8 @@ export function DatePicker({
               onMouseLeave={() => setHoveredDate(null)}
             >
               {calendarMonths.map((calendar) => (
-                <div className="ezdp-calendar" key={calendar.monthLabel}>
-                  {monthsToShow === 2 && (
-                    <div className="ezdp-submonth">{calendar.monthLabel}</div>
-                  )}
+                <div className="ezdp-calendar" key={calendar.monthDate.toISOString()}>
+                  {monthsToShow === 2 && <div className="ezdp-submonth">{calendar.monthLabel}</div>}
                   <div className="ezdp-weekdays">
                     {weekdayLabels.map((weekday) => (
                       <div key={`${calendar.monthLabel}-${weekday}`} className="ezdp-weekday">
@@ -682,33 +469,37 @@ export function DatePicker({
                   <div className="ezdp-grid">
                     {calendar.days.map(({ date, currentMonth }) => {
                       const disabledDay = isDateDisabled(date, minDate, maxDate);
-                      const hideOutsideDay =
-                        mode === "range" &&
-                        monthsToShow === 2 &&
-                        !currentMonth;
-                      const selected = normalizedSingleValue ? isSameDay(date, normalizedSingleValue) : false;
+                      const hideOutsideDay = mode === "range" && monthsToShow === 2 && !currentMonth;
                       const isPreviewRange =
                         mode === "range" &&
                         !!normalizedRangeValue?.start &&
                         !normalizedRangeValue?.end &&
                         !!hoveredDate;
 
-                      const rangeStart = effectiveRangeStart ? isSameDay(date, effectiveRangeStart) : false;
-                      const rangeEnd = effectiveRangeEnd ? isSameDay(date, effectiveRangeEnd) : false;
-                      const inRange =
-                        !!effectiveRangeStart && !!effectiveRangeEnd
-                          ? isBetween(date, effectiveRangeStart, effectiveRangeEnd)
-                          : false;
+                      const isSelectedSingle =
+                        mode === "single" &&
+                        !!normalizedSingleValue &&
+                        isSameDay(date, normalizedSingleValue);
+                      const isRangeStart =
+                        mode === "range" && !!effectiveRangeStart && isSameDay(date, effectiveRangeStart);
+                      const isRangeEnd =
+                        mode === "range" && !!effectiveRangeEnd && isSameDay(date, effectiveRangeEnd);
+                      const isInRange =
+                        mode === "range" &&
+                        !!effectiveRangeStart &&
+                        !!effectiveRangeEnd &&
+                        isBetween(date, effectiveRangeStart, effectiveRangeEnd);
                       const isToday = isSameDay(date, today);
+
                       const classes = [
                         "ezdp-day",
                         !currentMonth && "is-outside",
                         hideOutsideDay && "is-outside-hidden",
-                        mode === "single" && selected && "is-selected",
-                        mode === "range" && rangeStart && "is-range-start",
-                        mode === "range" && rangeEnd && "is-range-end",
-                        mode === "range" && inRange && "is-in-range",
-                        mode === "range" && isPreviewRange && (rangeStart || rangeEnd || inRange) && "is-preview",
+                        isSelectedSingle && "is-selected",
+                        isRangeStart && "is-range-start",
+                        isRangeEnd && "is-range-end",
+                        isInRange && "is-in-range",
+                        isPreviewRange && (isRangeStart || isRangeEnd || isInRange) && "is-preview",
                         isToday && "is-today",
                         disabledDay && "is-disabled"
                       ]
@@ -747,7 +538,12 @@ export function DatePicker({
           </div>
 
           <div className="ezdp-footer">
-            <button type="button" className="ezdp-action" onClick={handleToday} disabled={isDateDisabled(today, minDate, maxDate)}>
+            <button
+              type="button"
+              className="ezdp-action"
+              onClick={handleToday}
+              disabled={isDateDisabled(today, minDate, maxDate)}
+            >
               Today
             </button>
             <button
