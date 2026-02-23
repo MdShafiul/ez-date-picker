@@ -1,7 +1,37 @@
 import React, { useState } from "react";
-import { DatePicker, type DateRange } from "ez-date-picker";
+import {
+  DatePicker,
+  type DateRange,
+  type SingleDatePreset,
+  type RangeDatePreset
+} from "ez-date-picker";
 import "ez-date-picker/styles.css";
 import "./app.css";
+
+const SINGLE_PRESETS: SingleDatePreset[] = [
+  { id: "yesterday", label: "Yesterday", getDate: ({ today }) => new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1) },
+  { id: "today", label: "Today", getDate: ({ today }) => today },
+  { id: "next-friday", label: "Next Friday", getDate: ({ today }) => {
+    const base = new Date(today);
+    const day = base.getDay();
+    const diff = ((5 - day + 7) % 7) || 7;
+    base.setDate(base.getDate() + diff);
+    return base;
+  } }
+];
+
+const RANGE_PRESETS: RangeDatePreset[] = [
+  { id: "last-week", label: "Last Week" },
+  { id: "last-month", label: "Last Month" },
+  {
+    id: "next-14-days",
+    label: "Next 14 Days",
+    getRange: ({ today }) => ({
+      start: today,
+      end: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 13)
+    })
+  }
+];
 
 export function App(): JSX.Element {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -26,6 +56,10 @@ export function App(): JSX.Element {
               minDate={new Date(2024, 0, 1)}
               maxDate={new Date(2030, 11, 31)}
               startWeekOnMonday
+              showPresetPanel
+              presetPanelTitle="Shortcuts"
+              singlePresetLabel="My Presets"
+              singlePresets={SINGLE_PRESETS}
             />
             <p>
               <span>Selected:</span>{" "}
@@ -46,6 +80,10 @@ export function App(): JSX.Element {
               maxDate={new Date(2030, 11, 31)}
               startWeekOnMonday
               rangeMonthsToShow={2}
+              showPresetPanel
+              presetPanelTitle="Quick Ranges"
+              rangePresetLabel="Recent Windows"
+              rangePresets={RANGE_PRESETS}
             />
             <p>
               <span>Selected:</span>{" "}

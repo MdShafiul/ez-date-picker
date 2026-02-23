@@ -6,10 +6,35 @@ type CalendarDay = {
   currentMonth: boolean;
 };
 
+type PresetContext = {
+  today: Date;
+  startWeekOnMonday: boolean;
+};
+
+export type SingleDatePreset = {
+  id: string;
+  label: string;
+  date?: Date;
+  getDate?: (context: PresetContext) => Date;
+};
+
+export type RangeDatePreset = {
+  id: string;
+  label: string;
+  range?: DateRange;
+  getRange?: (context: PresetContext) => DateRange;
+};
+
 export type DatePickerProps = {
   mode?: "single" | "range";
   showRangeMeta?: boolean;
   rangeMonthsToShow?: 1 | 2;
+  showPresetPanel?: boolean;
+  presetPanelTitle?: string;
+  singlePresetLabel?: string;
+  rangePresetLabel?: string;
+  singlePresets?: SingleDatePreset[];
+  rangePresets?: RangeDatePreset[];
   value?: Date | null;
   onChange?: (date: Date | null) => void;
   rangeValue?: DateRange | null;
@@ -92,6 +117,30 @@ function formatInputDate(value: Date | null | undefined, locale: string): string
   }).format(value);
 }
 
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return startOfDay(next);
+}
+
+function startOfWeek(date: Date, startWeekOnMonday: boolean): Date {
+  const day = date.getDay();
+  const diff = startWeekOnMonday ? (day + 6) % 7 : day;
+  return addDays(date, -diff);
+}
+
+function endOfWeek(date: Date, startWeekOnMonday: boolean): Date {
+  return addDays(startOfWeek(date, startWeekOnMonday), 6);
+}
+
+function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function endOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
+
 function formatRangeValue(range: DateRange | null | undefined, locale: string): string {
   if (!range?.start && !range?.end) return "";
   if (range?.start && range?.end) {
@@ -111,6 +160,12 @@ function normalizeRange(range: DateRange | null | undefined): DateRange | null {
   };
 }
 
+function normalizePresetRange(range: DateRange | null | undefined): { start: Date; end: Date } | null {
+  if (!range?.start || !range?.end) return null;
+  const [start, end] = orderDates(startOfDay(range.start), startOfDay(range.end));
+  return { start, end };
+}
+
 function isBetween(date: Date, start: Date, end: Date): boolean {
   const value = startOfDay(date).getTime();
   const startTime = startOfDay(start).getTime();
@@ -126,10 +181,73 @@ function addMonths(date: Date, amount: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
+const DEFAULT_SINGLE_PRESETS: SingleDatePreset[] = [
+  {
+    id: "yesterday",
+    label: "Yesterday",
+    getDate: ({ today }) => addDays(today, -1)
+  },
+  {
+    id: "today",
+    label: "Today",
+    getDate: ({ today }) => today
+  },
+  {
+    id: "tomorrow",
+    label: "Tomorrow",
+    getDate: ({ today }) => addDays(today, 1)
+  }
+];
+
+const DEFAULT_RANGE_PRESETS: RangeDatePreset[] = [
+  {
+    id: "last-week",
+    label: "Last Week",
+    getRange: ({ today, startWeekOnMonday }) => {
+      const currentWeekStart = startOfWeek(today, startWeekOnMonday);
+      const start = addDays(currentWeekStart, -7);
+      const end = addDays(currentWeekStart, -1);
+      return { start, end };
+    }
+  },
+  {
+    id: "last-month",
+    label: "Last Month",
+    getRange: ({ today }) => {
+      const month = addMonths(today, -1);
+      return { start: startOfMonth(month), end: endOfMonth(month) };
+    }
+  },
+  {
+    id: "next-week",
+    label: "Next Week",
+    getRange: ({ today, startWeekOnMonday }) => {
+      const currentWeekEnd = endOfWeek(today, startWeekOnMonday);
+      const start = addDays(currentWeekEnd, 1);
+      const end = addDays(start, 6);
+      return { start, end };
+    }
+  },
+  {
+    id: "next-month",
+    label: "Next Month",
+    getRange: ({ today }) => {
+      const month = addMonths(today, 1);
+      return { start: startOfMonth(month), end: endOfMonth(month) };
+    }
+  }
+];
+
 export function DatePicker({
   mode = "single",
   showRangeMeta = true,
   rangeMonthsToShow = 1,
+  showPresetPanel = false,
+  presetPanelTitle = "Quick Select",
+  singlePresetLabel = "Single Date",
+  rangePresetLabel = "Date Range",
+  singlePresets,
+  rangePresets,
   value = null,
   onChange,
   rangeValue = null,
@@ -161,6 +279,10 @@ export function DatePicker({
 
   const today = useMemo(() => startOfDay(new Date()), []);
   const monthsToShow = mode === "range" ? rangeMonthsToShow : 1;
+  const presetContext = useMemo(
+    () => ({ today, startWeekOnMonday }),
+    [today, startWeekOnMonday]
+  );
   const displayValue =
     mode === "range"
       ? formatRangeValue(normalizedRangeValue, locale)
@@ -252,6 +374,41 @@ export function DatePicker({
           ? "Range selected"
           : "Select start date";
 
+  const resolvedSinglePresets = useMemo(() => {
+    const source = singlePresets ?? DEFAULT_SINGLE_PRESETS;
+    return source
+      .map((preset) => {
+        const rawDate = preset.getDate ? preset.getDate(presetContext) : preset.date;
+        if (!rawDate) return null;
+        return { id: preset.id, label: preset.label, date: startOfDay(rawDate) };
+      })
+      .filter((preset): preset is { id: string; label: string; date: Date } => !!preset);
+  }, [singlePresets, presetContext]);
+
+  const resolvedRangePresets = useMemo(() => {
+    const source = rangePresets ?? DEFAULT_RANGE_PRESETS;
+    return source
+      .map((preset) => {
+        const rawRange = preset.getRange ? preset.getRange(presetContext) : preset.range;
+        const normalized = normalizePresetRange(rawRange);
+        if (!normalized) return null;
+        return { id: preset.id, label: preset.label, range: normalized };
+      })
+      .filter(
+        (preset): preset is { id: string; label: string; range: { start: Date; end: Date } } =>
+          !!preset
+      );
+  }, [rangePresets, presetContext]);
+
+  const isSinglePresetActive = (date: Date): boolean =>
+    !!normalizedSingleValue && isSameDay(normalizedSingleValue, date);
+
+  const isRangePresetActive = (presetRange: { start: Date; end: Date }): boolean =>
+    !!effectiveRangeStart &&
+    !!effectiveRangeEnd &&
+    isSameDay(effectiveRangeStart, presetRange.start) &&
+    isSameDay(effectiveRangeEnd, presetRange.end);
+
   const handleSelectDate = (date: Date): void => {
     if (isDateDisabled(date, minDate, maxDate)) return;
 
@@ -315,6 +472,24 @@ export function DatePicker({
     onChange?.(null);
   };
 
+  const handleSinglePreset = (date: Date): void => {
+    if (isDateDisabled(date, minDate, maxDate)) return;
+    const normalizedDate = startOfDay(date);
+    onChange?.(normalizedDate);
+    setViewMonth(new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), 1));
+    setIsOpen(false);
+  };
+
+  const handleRangePreset = (range: { start: Date; end: Date }): void => {
+    if (isDateDisabled(range.start, minDate, maxDate) || isDateDisabled(range.end, minDate, maxDate)) {
+      return;
+    }
+    setHoveredDate(null);
+    onRangeChange?.({ start: range.start, end: range.end });
+    setViewMonth(new Date(range.start.getFullYear(), range.start.getMonth(), 1));
+    setIsOpen(false);
+  };
+
   return (
     <div className={["ezdp", className].filter(Boolean).join(" ")} ref={wrapperRef}>
       <button
@@ -343,7 +518,8 @@ export function DatePicker({
           className={[
             "ezdp-panel",
             mode === "range" && "is-range-mode",
-            mode === "range" && monthsToShow === 2 && "is-two-months"
+            mode === "range" && monthsToShow === 2 && "is-two-months",
+            showPresetPanel && "is-with-presets"
           ]
             .filter(Boolean)
             .join(" ")}
@@ -392,84 +568,135 @@ export function DatePicker({
             </div>
           )}
 
-          <div className={["ezdp-calendars", monthsToShow === 2 && "is-two-months"].filter(Boolean).join(" ")} onMouseLeave={() => setHoveredDate(null)}>
-            {calendarMonths.map((calendar) => (
-              <div className="ezdp-calendar" key={calendar.monthLabel}>
-                {monthsToShow === 2 && (
-                  <div className="ezdp-submonth">{calendar.monthLabel}</div>
-                )}
-                <div className="ezdp-weekdays">
-                  {weekdayLabels.map((weekday) => (
-                    <div key={`${calendar.monthLabel}-${weekday}`} className="ezdp-weekday">
-                      {weekday}
-                    </div>
-                  ))}
+          <div className={["ezdp-content", showPresetPanel && "has-presets"].filter(Boolean).join(" ")}>
+            {showPresetPanel && (
+              <aside className="ezdp-presets" aria-label="Quick preset dates">
+                <div className="ezdp-presets-title">{presetPanelTitle}</div>
+                <div className="ezdp-presets-subtitle">
+                  {mode === "range" ? rangePresetLabel : singlePresetLabel}
                 </div>
+                <div className="ezdp-presets-list">
+                  {mode === "single" &&
+                    resolvedSinglePresets.map((preset) => {
+                      const disabledPreset = isDateDisabled(preset.date, minDate, maxDate);
+                      const activePreset = isSinglePresetActive(preset.date);
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          className={["ezdp-preset", activePreset && "is-active"].filter(Boolean).join(" ")}
+                          onClick={() => handleSinglePreset(preset.date)}
+                          disabled={disabledPreset}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
 
-                <div className="ezdp-grid">
-                  {calendar.days.map(({ date, currentMonth }) => {
-                    const disabledDay = isDateDisabled(date, minDate, maxDate);
-                    const hideOutsideDay =
-                      mode === "range" &&
-                      monthsToShow === 2 &&
-                      !currentMonth;
-                    const selected = normalizedSingleValue ? isSameDay(date, normalizedSingleValue) : false;
-                    const isPreviewRange =
-                      mode === "range" &&
-                      !!normalizedRangeValue?.start &&
-                      !normalizedRangeValue?.end &&
-                      !!hoveredDate;
-
-                    const rangeStart = effectiveRangeStart ? isSameDay(date, effectiveRangeStart) : false;
-                    const rangeEnd = effectiveRangeEnd ? isSameDay(date, effectiveRangeEnd) : false;
-                    const inRange =
-                      !!effectiveRangeStart && !!effectiveRangeEnd
-                        ? isBetween(date, effectiveRangeStart, effectiveRangeEnd)
-                        : false;
-                    const isToday = isSameDay(date, today);
-                    const classes = [
-                      "ezdp-day",
-                      !currentMonth && "is-outside",
-                      hideOutsideDay && "is-outside-hidden",
-                      mode === "single" && selected && "is-selected",
-                      mode === "range" && rangeStart && "is-range-start",
-                      mode === "range" && rangeEnd && "is-range-end",
-                      mode === "range" && inRange && "is-in-range",
-                      mode === "range" && isPreviewRange && (rangeStart || rangeEnd || inRange) && "is-preview",
-                      isToday && "is-today",
-                      disabledDay && "is-disabled"
-                    ]
-                      .filter(Boolean)
-                      .join(" ");
-
-                    return (
-                      <button
-                        key={date.toISOString()}
-                        type="button"
-                        className={classes}
-                        onClick={() => handleSelectDate(date)}
-                        onMouseEnter={() => {
-                          if (mode !== "range") return;
-                          if (!normalizedRangeValue?.start || normalizedRangeValue?.end) return;
-                          if (disabledDay) return;
-                          setHoveredDate(startOfDay(date));
-                        }}
-                        onFocus={() => {
-                          if (mode !== "range") return;
-                          if (!normalizedRangeValue?.start || normalizedRangeValue?.end) return;
-                          if (disabledDay) return;
-                          setHoveredDate(startOfDay(date));
-                        }}
-                        disabled={disabledDay || hideOutsideDay}
-                        aria-hidden={hideOutsideDay}
-                      >
-                        {date.getDate()}
-                      </button>
-                    );
-                  })}
+                  {mode === "range" &&
+                    resolvedRangePresets.map((preset) => {
+                      const disabledPreset =
+                        isDateDisabled(preset.range.start, minDate, maxDate) ||
+                        isDateDisabled(preset.range.end, minDate, maxDate);
+                      const activePreset = isRangePresetActive(preset.range);
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          className={["ezdp-preset", activePreset && "is-active"].filter(Boolean).join(" ")}
+                          onClick={() => handleRangePreset(preset.range)}
+                          disabled={disabledPreset}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
                 </div>
-              </div>
-            ))}
+              </aside>
+            )}
+
+            <div
+              className={["ezdp-calendars", monthsToShow === 2 && "is-two-months"].filter(Boolean).join(" ")}
+              onMouseLeave={() => setHoveredDate(null)}
+            >
+              {calendarMonths.map((calendar) => (
+                <div className="ezdp-calendar" key={calendar.monthLabel}>
+                  {monthsToShow === 2 && (
+                    <div className="ezdp-submonth">{calendar.monthLabel}</div>
+                  )}
+                  <div className="ezdp-weekdays">
+                    {weekdayLabels.map((weekday) => (
+                      <div key={`${calendar.monthLabel}-${weekday}`} className="ezdp-weekday">
+                        {weekday}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="ezdp-grid">
+                    {calendar.days.map(({ date, currentMonth }) => {
+                      const disabledDay = isDateDisabled(date, minDate, maxDate);
+                      const hideOutsideDay =
+                        mode === "range" &&
+                        monthsToShow === 2 &&
+                        !currentMonth;
+                      const selected = normalizedSingleValue ? isSameDay(date, normalizedSingleValue) : false;
+                      const isPreviewRange =
+                        mode === "range" &&
+                        !!normalizedRangeValue?.start &&
+                        !normalizedRangeValue?.end &&
+                        !!hoveredDate;
+
+                      const rangeStart = effectiveRangeStart ? isSameDay(date, effectiveRangeStart) : false;
+                      const rangeEnd = effectiveRangeEnd ? isSameDay(date, effectiveRangeEnd) : false;
+                      const inRange =
+                        !!effectiveRangeStart && !!effectiveRangeEnd
+                          ? isBetween(date, effectiveRangeStart, effectiveRangeEnd)
+                          : false;
+                      const isToday = isSameDay(date, today);
+                      const classes = [
+                        "ezdp-day",
+                        !currentMonth && "is-outside",
+                        hideOutsideDay && "is-outside-hidden",
+                        mode === "single" && selected && "is-selected",
+                        mode === "range" && rangeStart && "is-range-start",
+                        mode === "range" && rangeEnd && "is-range-end",
+                        mode === "range" && inRange && "is-in-range",
+                        mode === "range" && isPreviewRange && (rangeStart || rangeEnd || inRange) && "is-preview",
+                        isToday && "is-today",
+                        disabledDay && "is-disabled"
+                      ]
+                        .filter(Boolean)
+                        .join(" ");
+
+                      return (
+                        <button
+                          key={date.toISOString()}
+                          type="button"
+                          className={classes}
+                          onClick={() => handleSelectDate(date)}
+                          onMouseEnter={() => {
+                            if (mode !== "range") return;
+                            if (!normalizedRangeValue?.start || normalizedRangeValue?.end) return;
+                            if (disabledDay) return;
+                            setHoveredDate(startOfDay(date));
+                          }}
+                          onFocus={() => {
+                            if (mode !== "range") return;
+                            if (!normalizedRangeValue?.start || normalizedRangeValue?.end) return;
+                            if (disabledDay) return;
+                            setHoveredDate(startOfDay(date));
+                          }}
+                          disabled={disabledDay || hideOutsideDay}
+                          aria-hidden={hideOutsideDay}
+                        >
+                          {date.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="ezdp-footer">

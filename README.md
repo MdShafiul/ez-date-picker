@@ -51,10 +51,31 @@ export default function App() {
 }
 ```
 
+Preset side panel:
+
+```tsx
+import { DatePicker } from "ez-date-picker";
+
+<DatePicker
+  mode="range"
+  showPresetPanel
+  presetPanelTitle="Quick Ranges"
+  rangePresetLabel="Popular ranges"
+  rangeMonthsToShow={2}
+/>;
+```
+
 ## Props
 
 - `mode?: "single" | "range"` (default `"single"`)
+- `showRangeMeta?: boolean` (default `true`, range mode only)
 - `rangeMonthsToShow?: 1 | 2` (default `1`, used in range mode)
+- `showPresetPanel?: boolean` (default `false`)
+- `presetPanelTitle?: string` (default `"Quick Select"`)
+- `singlePresetLabel?: string` (default `"Single Date"`)
+- `rangePresetLabel?: string` (default `"Date Range"`)
+- `singlePresets?: SingleDatePreset[]` (custom list for single mode)
+- `rangePresets?: RangeDatePreset[]` (custom list for range mode)
 - `value?: Date | null`
 - `onChange?: (date: Date | null) => void`
 - `rangeValue?: { start: Date | null; end: Date | null } | null`

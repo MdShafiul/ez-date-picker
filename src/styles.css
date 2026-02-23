@@ -79,6 +79,14 @@
   width: 648px;
 }
 
+.ezdp-panel.is-with-presets {
+  width: 560px;
+}
+
+.ezdp-panel.is-with-presets.is-two-months {
+  width: 860px;
+}
+
 .ezdp-header {
   display: grid;
   grid-template-columns: 32px 1fr 32px;
@@ -158,6 +166,71 @@
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
+}
+
+.ezdp-content {
+  display: block;
+}
+
+.ezdp-content.has-presets {
+  display: grid;
+  grid-template-columns: minmax(176px, 196px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.ezdp-presets {
+  border: 1px solid #dfe9f5;
+  background: linear-gradient(180deg, #fbfdff, #f4f8fd);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.ezdp-presets-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #16344a;
+  margin-bottom: 4px;
+}
+
+.ezdp-presets-subtitle {
+  font-size: 11px;
+  color: #5f7388;
+  margin-bottom: 8px;
+}
+
+.ezdp-presets-list {
+  display: grid;
+  gap: 6px;
+}
+
+.ezdp-preset {
+  border: 1px solid #d3e2f0;
+  border-radius: 9px;
+  background: #fff;
+  color: #1e3c52;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ezdp-preset:hover {
+  border-color: #8ebdb8;
+  background: #edf8f6;
+}
+
+.ezdp-preset.is-active {
+  border-color: #67aea7;
+  background: #e1f3f0;
+  color: #0b5f59;
+}
+
+.ezdp-preset:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .ezdp-calendars {
@@ -328,6 +401,18 @@
 
   .ezdp-panel.is-two-months {
     width: 100%;
+  }
+
+  .ezdp-panel.is-with-presets {
+    width: 100%;
+  }
+
+  .ezdp-panel.is-with-presets.is-two-months {
+    width: 100%;
+  }
+
+  .ezdp-content.has-presets {
+    grid-template-columns: 1fr;
   }
 
   .ezdp-calendars.is-two-months {
