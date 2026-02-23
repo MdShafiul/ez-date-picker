@@ -65,11 +65,31 @@ import { DatePicker } from "ez-date-picker";
 />;
 ```
 
+Theme customization:
+
+```tsx
+import { DatePicker, type DatePickerTheme } from "ez-date-picker";
+
+const theme: Partial<DatePickerTheme> = {
+  primary: "#c2410c",
+  primaryStrong: "#9a3412",
+  primarySoft: "#ffedd5",
+  border: "#fed7aa",
+  shadow: "0 18px 40px rgba(154, 52, 18, 0.16)",
+  inputRadius: "14px",
+  panelRadius: "18px",
+  dayRadius: "12px"
+};
+
+<DatePicker theme={theme} />;
+```
+
 ## Props
 
 - `mode?: "single" | "range"` (default `"single"`)
 - `showRangeMeta?: boolean` (default `true`, range mode only)
 - `rangeMonthsToShow?: 1 | 2` (default `1`, used in range mode)
+- `theme?: Partial<DatePickerTheme>` (typed visual tokens for color/radius/shadow/font)
 - `showPresetPanel?: boolean` (default `false`)
 - `presetPanelTitle?: string` (default `"Quick Select"`)
 - `singlePresetLabel?: string` (default `"Single Date"`)
@@ -85,6 +105,7 @@ import { DatePicker } from "ez-date-picker";
 - `maxDate?: Date`
 - `disabled?: boolean`
 - `className?: string`
+- `style?: React.CSSProperties`
 - `locale?: string` (default `en-US`)
 - `startWeekOnMonday?: boolean` (default `false`)
 

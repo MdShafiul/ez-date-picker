@@ -8,12 +8,16 @@
   --ezdp-primary-strong: #0b5f59;
   --ezdp-primary-soft: #d9f3f0;
   --ezdp-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+  --ezdp-font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  --ezdp-input-radius: 12px;
+  --ezdp-panel-radius: 16px;
+  --ezdp-day-radius: 10px;
 }
 
 .ezdp {
   position: relative;
   width: 280px;
-  font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  font-family: var(--ezdp-font-family);
 }
 
 .ezdp-input {
@@ -22,7 +26,7 @@
   border: 1px solid var(--ezdp-border);
   background: linear-gradient(180deg, #ffffff, #f9fbfd);
   color: var(--ezdp-text);
-  border-radius: 12px;
+  border-radius: var(--ezdp-input-radius);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -64,7 +68,7 @@
   left: 0;
   width: 300px;
   border: 1px solid var(--ezdp-border);
-  border-radius: 16px;
+  border-radius: var(--ezdp-panel-radius);
   background: var(--ezdp-bg);
   box-shadow: var(--ezdp-shadow);
   padding: 12px;
@@ -271,7 +275,7 @@
 
 .ezdp-day {
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--ezdp-day-radius);
   background: var(--ezdp-surface);
   color: #223348;
   height: 34px;

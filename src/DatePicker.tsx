@@ -25,10 +25,27 @@ export type RangeDatePreset = {
   getRange?: (context: PresetContext) => DateRange;
 };
 
+export type DatePickerTheme = {
+  background: string;
+  surface: string;
+  border: string;
+  text: string;
+  muted: string;
+  primary: string;
+  primaryStrong: string;
+  primarySoft: string;
+  shadow: string;
+  fontFamily: string;
+  inputRadius: string;
+  panelRadius: string;
+  dayRadius: string;
+};
+
 export type DatePickerProps = {
   mode?: "single" | "range";
   showRangeMeta?: boolean;
   rangeMonthsToShow?: 1 | 2;
+  theme?: Partial<DatePickerTheme>;
   showPresetPanel?: boolean;
   presetPanelTitle?: string;
   singlePresetLabel?: string;
@@ -44,6 +61,7 @@ export type DatePickerProps = {
   maxDate?: Date;
   disabled?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   locale?: string;
   startWeekOnMonday?: boolean;
 };
@@ -181,6 +199,22 @@ function addMonths(date: Date, amount: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
+const THEME_VAR_MAP: Record<keyof DatePickerTheme, string> = {
+  background: "--ezdp-bg",
+  surface: "--ezdp-surface",
+  border: "--ezdp-border",
+  text: "--ezdp-text",
+  muted: "--ezdp-muted",
+  primary: "--ezdp-primary",
+  primaryStrong: "--ezdp-primary-strong",
+  primarySoft: "--ezdp-primary-soft",
+  shadow: "--ezdp-shadow",
+  fontFamily: "--ezdp-font-family",
+  inputRadius: "--ezdp-input-radius",
+  panelRadius: "--ezdp-panel-radius",
+  dayRadius: "--ezdp-day-radius"
+};
+
 const DEFAULT_SINGLE_PRESETS: SingleDatePreset[] = [
   {
     id: "yesterday",
@@ -242,6 +276,7 @@ export function DatePicker({
   mode = "single",
   showRangeMeta = true,
   rangeMonthsToShow = 1,
+  theme,
   showPresetPanel = false,
   presetPanelTitle = "Quick Select",
   singlePresetLabel = "Single Date",
@@ -257,6 +292,7 @@ export function DatePicker({
   maxDate,
   disabled = false,
   className,
+  style,
   locale = "en-US",
   startWeekOnMonday = false
 }: DatePickerProps): JSX.Element {
@@ -278,6 +314,17 @@ export function DatePicker({
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const today = useMemo(() => startOfDay(new Date()), []);
+  const themedStyle = useMemo(() => {
+    if (!theme) return style;
+    const nextStyle: React.CSSProperties = { ...(style ?? {}) };
+    (Object.keys(THEME_VAR_MAP) as Array<keyof DatePickerTheme>).forEach((token) => {
+      const value = theme[token];
+      if (!value) return;
+      const varName = THEME_VAR_MAP[token];
+      (nextStyle as Record<string, string>)[varName] = value;
+    });
+    return nextStyle;
+  }, [theme, style]);
   const monthsToShow = mode === "range" ? rangeMonthsToShow : 1;
   const presetContext = useMemo(
     () => ({ today, startWeekOnMonday }),
@@ -491,7 +538,7 @@ export function DatePicker({
   };
 
   return (
-    <div className={["ezdp", className].filter(Boolean).join(" ")} ref={wrapperRef}>
+    <div className={["ezdp", className].filter(Boolean).join(" ")} ref={wrapperRef} style={themedStyle}>
       <button
         type="button"
         className="ezdp-input"

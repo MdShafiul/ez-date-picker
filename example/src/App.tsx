@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   DatePicker,
   type DateRange,
+  type DatePickerTheme,
   type SingleDatePreset,
   type RangeDatePreset
 } from "ez-date-picker";
@@ -33,6 +34,19 @@ const RANGE_PRESETS: RangeDatePreset[] = [
   }
 ];
 
+const CUSTOM_THEME: Partial<DatePickerTheme> = {
+  background: "#eff6ff",
+  surface: "#dbeafe",
+  primary: "#2563eb",
+  primaryStrong: "#1d4ed8",
+  primarySoft: "#dbeafe",
+  border: "#93c5fd",
+  shadow: "0 18px 40px rgba(37, 99, 235, 0.18)",
+  inputRadius: "14px",
+  panelRadius: "18px",
+  dayRadius: "12px"
+};
+
 export function App(): JSX.Element {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selectedRange, setSelectedRange] = useState<DateRange>({
@@ -60,6 +74,7 @@ export function App(): JSX.Element {
               presetPanelTitle="Shortcuts"
               singlePresetLabel="My Presets"
               singlePresets={SINGLE_PRESETS}
+              theme={CUSTOM_THEME}
             />
             <p>
               <span>Selected:</span>{" "}

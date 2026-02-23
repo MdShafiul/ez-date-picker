@@ -3,6 +3,7 @@ export type {
   DatePickerProps,
   DateRange,
   SingleDatePreset,
-  RangeDatePreset
+  RangeDatePreset,
+  DatePickerTheme
 } from "./DatePicker";
 import "./styles.css";
