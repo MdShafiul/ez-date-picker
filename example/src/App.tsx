@@ -35,13 +35,13 @@ const RANGE_PRESETS: RangeDatePreset[] = [
 ];
 
 const CUSTOM_THEME: Partial<DatePickerTheme> = {
-  background: "#eff6ff",
-  surface: "#dbeafe",
-  primary: "#2563eb",
-  primaryStrong: "#1d4ed8",
-  primarySoft: "#dbeafe",
-  border: "#93c5fd",
-  shadow: "0 18px 40px rgba(37, 99, 235, 0.18)",
+  background: "#f5f8fa",
+  surface: "#eaf1f5",
+  primary: "#2f6f8f",
+  primaryStrong: "#255b75",
+  primarySoft: "#dceaf1",
+  border: "#bfd4df",
+  shadow: "0 18px 40px rgba(47, 111, 143, 0.16)",
   inputRadius: "14px",
   panelRadius: "18px",
   dayRadius: "12px"
