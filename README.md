@@ -116,6 +116,14 @@ npm install
 npm run build
 ```
 
+Documentation app:
+
+```bash
+cd docs
+npm install
+npm run dev
+```
+
 ## License
 
 MIT

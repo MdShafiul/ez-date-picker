@@ -22,6 +22,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "docs:dev": "npm run dev --prefix docs",
+    "docs:build": "npm run build --prefix docs",
     "clean": "if exist dist rmdir /s /q dist",
     "prepare": "npm run build"
   },

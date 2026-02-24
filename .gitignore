@@ -2,6 +2,9 @@ node_modules/
 dist/
 example/node_modules/
 example/dist/
+docs/.next/
+docs/node_modules/
+docs/out/
 *.log
 *.tsbuildinfo
 .DS_Store
