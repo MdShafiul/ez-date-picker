@@ -56,6 +56,44 @@ const featureItems = [
   "Controlled state API with TypeScript-first prop and preset types"
 ];
 
+const fullThemeSnippet = `const theme = {
+  background: "#f4f8f9",
+  surface: "#e6eef0",
+  border: "#bdd4db",
+  text: "#0f172a",
+  muted: "#4b657a",
+  primary: "#176b87",
+  primaryStrong: "#0f5168",
+  primarySoft: "#dbe9ed",
+  shadow: "0 20px 40px rgba(20, 84, 106, 0.18)",
+  fontFamily: "\"Manrope\", \"Segoe UI\", sans-serif",
+  inputRadius: "14px",
+  panelRadius: "20px",
+  dayRadius: "12px"
+};
+
+<DatePicker theme={theme} />`;
+
+const themeTokenDocs: Array<{
+  token: string;
+  type: string;
+  description: string;
+}> = [
+  { token: "background", type: "string", description: "Panel and popup base background color." },
+  { token: "surface", type: "string", description: "Day-cell surface/background tone." },
+  { token: "border", type: "string", description: "Main border color for inputs, panel, and cards." },
+  { token: "text", type: "string", description: "Primary text color used across picker UI." },
+  { token: "muted", type: "string", description: "Muted text color for placeholders and helper labels." },
+  { token: "primary", type: "string", description: "Primary accent color (selected/interactive states)." },
+  { token: "primaryStrong", type: "string", description: "Stronger primary shade for gradients/pressed accents." },
+  { token: "primarySoft", type: "string", description: "Soft primary tint for hover backgrounds and chips." },
+  { token: "shadow", type: "string", description: "Popup shadow style (full CSS shadow value)." },
+  { token: "fontFamily", type: "string", description: "Font stack for picker typography." },
+  { token: "inputRadius", type: "string", description: "Input trigger border radius (e.g. \"12px\")." },
+  { token: "panelRadius", type: "string", description: "Calendar panel border radius." },
+  { token: "dayRadius", type: "string", description: "Day-cell border radius." }
+];
+
 const propDocs: Array<{
   name: string;
   type: string;
@@ -290,6 +328,27 @@ export default function HomePage(): JSX.Element {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="panel reveal">
+        <h2>Theme Tokens</h2>
+        <p className="section-copy">
+          <code>theme</code> accepts <code>Partial&lt;DatePickerTheme&gt;</code>. These tokens map
+          directly to picker CSS variables so you can fully reskin the component without fragile CSS
+          overrides.
+        </p>
+        <div className="token-grid">
+          {themeTokenDocs.map((item) => (
+            <article key={item.token} className="token-card">
+              <div className="token-head">
+                <h3>{item.token}</h3>
+                <span>{item.type}</span>
+              </div>
+              <p>{item.description}</p>
+            </article>
+          ))}
+        </div>
+        <CodeSnippet title="Full Theme Example" code={fullThemeSnippet} language="tsx" />
       </section>
 
       <section className="panel reveal">

@@ -200,6 +200,48 @@ h1 {
   font-weight: 700;
 }
 
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.token-card {
+  border: 1px solid #d4e3f1;
+  background: linear-gradient(180deg, #ffffff, #f9fbff);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.token-card p {
+  margin: 8px 0 0;
+  color: #3f5f79;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.token-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.token-head h3 {
+  font-size: 16px;
+}
+
+.token-head span {
+  border: 1px solid #bfd7ea;
+  background: #edf6ff;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2d5575;
+}
+
 .demo-card {
   position: relative;
   z-index: 1;
@@ -353,7 +395,8 @@ h1 {
 @media (max-width: 1050px) {
   .content-grid,
   .demo-grid,
-  .prop-grid {
+  .prop-grid,
+  .token-grid {
     grid-template-columns: 1fr;
   }
 }
