@@ -1,5 +1,8 @@
 # ez-date-picker
 
+![npm](https://img.shields.io/npm/v/ez-date-picker)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/MdShafiul/ez-date-picker)
+
 A modern, lightweight React date picker component with a polished calendar popover UI.
 
 ## Install
