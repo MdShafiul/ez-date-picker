@@ -124,6 +124,12 @@ npm install
 npm run dev
 ```
 
+## Contributing & Issues
+
+If you want to contribute or report bugs/issues, use:
+
+`https://github.com/MdShafiul/ez-date-picker`
+
 ## License
 
 MIT

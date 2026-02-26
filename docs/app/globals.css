@@ -134,6 +134,18 @@ h1 {
   line-height: 1.6;
 }
 
+.section-copy a {
+  color: #0b5e8a;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(11, 94, 138, 0.4);
+}
+
+.section-copy a:hover {
+  color: #084969;
+  border-bottom-color: rgba(8, 73, 105, 0.6);
+}
+
 .feature-list {
   margin: 10px 0 0;
   padding-left: 18px;
@@ -277,6 +289,11 @@ h1 {
   background: #f8fcff;
   border-radius: 12px;
   overflow: hidden;
+}
+
+.snippet-stack {
+  display: grid;
+  gap: 12px;
 }
 
 .snippet-head {

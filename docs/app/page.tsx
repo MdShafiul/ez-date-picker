@@ -283,11 +283,13 @@ export default function HomePage(): JSX.Element {
         </p>
       </section>
 
-      <section className="content-grid">
+      <section className="content-grid space-2">
         <article className="panel reveal">
           <h2>Install</h2>
-          <CodeSnippet title="npm" code={installSnippet} language="bash" />
-          <CodeSnippet title="Quick Start" code={quickStartSnippet} language="tsx" />
+          <div className="snippet-stack">
+            <CodeSnippet title="npm" code={installSnippet} language="bash" />
+            <CodeSnippet title="Quick Start" code={quickStartSnippet} language="tsx" />
+          </div>
         </article>
 
         <article className="panel reveal">
@@ -379,6 +381,23 @@ export default function HomePage(): JSX.Element {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="panel reveal">
+        <h2>Contribute & Report Issues</h2>
+        <p className="section-copy">
+          Found a bug, have a feature request, or want to contribute improvements?
+          Use the official GitHub repository:
+        </p>
+        <p className="section-copy">
+          <a
+            href="https://github.com/MdShafiul/ez-date-picker"
+            target="_blank"
+            rel="noreferrer"
+          >
+            https://github.com/MdShafiul/ez-date-picker
+          </a>
+        </p>
       </section>
     </main>
   );
