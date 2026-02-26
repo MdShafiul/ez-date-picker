@@ -2,8 +2,9 @@
 
 ![npm](https://img.shields.io/npm/v/ez-date-picker)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?logo=github)](https://github.com/MdShafiul/ez-date-picker)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen?logo=vercel)](https://ez-date-picker-docs.vercel.app)
 
-A modern, lightweight React date picker component with a polished calendar popover UI.
+A modern, lightweight React date picker component with a polished calendar popover UI. ([Documentaions](https://ez-date-picker-docs.vercel.app/))
 
 ## Install
 
