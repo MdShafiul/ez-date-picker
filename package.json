@@ -1,6 +1,6 @@
 {
   "name": "ez-date-picker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A modern, lightweight React date picker component.",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
