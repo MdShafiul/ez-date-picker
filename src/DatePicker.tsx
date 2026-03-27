@@ -115,6 +115,9 @@ export function DatePicker({
     return normalizedSingleValue ?? new Date();
   });
 
+  const [showYearSelector, setShowYearSelector] = useState(false);
+  const [showMonthSelector, setShowMonthSelector] = useState(false);
+
   const today = useMemo(() => startOfDay(new Date()), []);
   const themedStyle = useMemo(() => buildThemedStyle(theme, style), [theme, style]);
   const monthsToShow = mode === "range" ? rangeMonthsToShow : 1;
@@ -288,13 +291,54 @@ export function DatePicker({
     setIsOpen(false);
   };
 
+  const handleNextMonth = (): void => {
+    setViewMonth((prev) => addMonths(prev, 1));
+  };
+
   const handlePrevMonth = (): void => {
     setViewMonth((prev) => addMonths(prev, -1));
   };
 
-  const handleNextMonth = (): void => {
-    setViewMonth((prev) => addMonths(prev, 1));
+  const handleYearClick = (): void => {
+    setShowYearSelector(!showYearSelector);
+    setShowMonthSelector(false);
   };
+
+  const handleMonthClick = (): void => {
+    setShowMonthSelector(!showMonthSelector);
+    setShowYearSelector(false);
+  };
+
+  const handleYearSelect = (year: number): void => {
+    const newMonth = new Date(year, viewMonth.getMonth(), 1);
+    setViewMonth(newMonth);
+    setShowYearSelector(false);
+  };
+
+  const handleMonthSelect = (month: number): void => {
+    const newMonth = new Date(viewMonth.getFullYear(), month, 1);
+    setViewMonth(newMonth);
+    setShowMonthSelector(false);
+  };
+
+  const currentYear = viewMonth.getFullYear();
+  const currentMonth = viewMonth.getMonth();
+  
+  const yearOptions = useMemo(() => {
+    const years = [];
+    const startYear = currentYear - 10;
+    const endYear = currentYear + 10;
+    for (let year = startYear; year <= endYear; year++) {
+      years.push(year);
+    }
+    return years;
+  }, [currentYear]);
+
+  const monthOptions = useMemo(() => {
+    return Array.from({ length: 12 }, (_, index) => {
+      return new Date(2000, index, 1).toLocaleDateString(locale, { month: 'long' });
+    });
+  }, [locale]);
 
   const handleToday = (): void => {
     if (isDateDisabled(today, minDate, maxDate)) return;
@@ -357,6 +401,62 @@ export function DatePicker({
           role="dialog"
           aria-label="Date picker calendar"
         >
+          {showYearSelector && (
+            <div className="ezdp-selector ezdp-year-selector">
+              <div className="ezdp-selector-header">
+                <span>Select Year</span>
+                <button 
+                  type="button" 
+                  className="ezdp-selector-close"
+                  onClick={() => setShowYearSelector(false)}
+                  aria-label="Close year selector"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="ezdp-selector-grid">
+                {yearOptions.map((year) => (
+                  <button
+                    key={year}
+                    type="button"
+                    className={`ezdp-selector-item ${year === currentYear ? 'is-selected' : ''}`}
+                    onClick={() => handleYearSelect(year)}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {showMonthSelector && (
+            <div className="ezdp-selector ezdp-month-selector">
+              <div className="ezdp-selector-header">
+                <span>Select Month</span>
+                <button 
+                  type="button" 
+                  className="ezdp-selector-close"
+                  onClick={() => setShowMonthSelector(false)}
+                  aria-label="Close month selector"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="ezdp-selector-grid">
+                {monthOptions.map((month, index) => (
+                  <button
+                    key={month}
+                    type="button"
+                    className={`ezdp-selector-item ${index === currentMonth ? 'is-selected' : ''}`}
+                    onClick={() => handleMonthSelect(index)}
+                  >
+                    {month}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="ezdp-header">
             <button
               type="button"
@@ -371,7 +471,24 @@ export function DatePicker({
                 />
               </svg>
             </button>
-            <div className="ezdp-month">{monthLabel}</div>
+            <div className="ezdp-month-year">
+              <button 
+                type="button" 
+                className="ezdp-month-btn"
+                onClick={handleMonthClick}
+                aria-label="Select month"
+              >
+                {new Intl.DateTimeFormat(locale, { month: 'long' }).format(viewMonth)}
+              </button>
+              <button 
+                type="button" 
+                className="ezdp-year-btn"
+                onClick={handleYearClick}
+                aria-label="Select year"
+              >
+                {currentYear}
+              </button>
+            </div>
             <button type="button" className="ezdp-nav" onClick={handleNextMonth} aria-label="Next month">
               <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                 <path
