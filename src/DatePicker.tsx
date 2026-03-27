@@ -95,7 +95,10 @@ export function DatePicker({
   className,
   style,
   locale = "en-US",
-  startWeekOnMonday = false
+  startWeekOnMonday = false,
+  yearRange = 10,
+  yearRangeBefore,
+  yearRangeAfter
 }: DatePickerProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
@@ -326,13 +329,17 @@ export function DatePicker({
   
   const yearOptions = useMemo(() => {
     const years = [];
-    const startYear = currentYear - 10;
-    const endYear = currentYear + 10;
+    const startYear = yearRangeBefore !== undefined 
+      ? currentYear - yearRangeBefore 
+      : currentYear - yearRange;
+    const endYear = yearRangeAfter !== undefined 
+      ? currentYear + yearRangeAfter 
+      : currentYear + yearRange;
     for (let year = startYear; year <= endYear; year++) {
       years.push(year);
     }
     return years;
-  }, [currentYear]);
+  }, [currentYear, yearRange, yearRangeBefore, yearRangeAfter]);
 
   const monthOptions = useMemo(() => {
     return Array.from({ length: 12 }, (_, index) => {

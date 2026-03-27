@@ -63,6 +63,9 @@ export type DatePickerProps = {
   style?: React.CSSProperties;
   locale?: string;
   startWeekOnMonday?: boolean;
+  yearRange?: number;
+  yearRangeBefore?: number;
+  yearRangeAfter?: number;
 };
 
 export type CalendarDay = {

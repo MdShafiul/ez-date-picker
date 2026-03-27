@@ -88,6 +88,22 @@ const theme: Partial<DatePickerTheme> = {
 <DatePicker theme={theme} />;
 ```
 
+Year range customization:
+
+```tsx
+// Default: 10 years before and after current year
+<DatePicker />
+
+// Custom range: 5 years before and after
+<DatePicker yearRange={5} />
+
+// Asymmetric range: 3 years before, 20 years after
+<DatePicker yearRangeBefore={3} yearRangeAfter={20} />
+
+// Mixed: yearRange for before, custom for after
+<DatePicker yearRange={8} yearRangeAfter={25} />
+```
+
 ## Props
 
 - `mode?: "single" | "range"` (default `"single"`)
@@ -112,6 +128,9 @@ const theme: Partial<DatePickerTheme> = {
 - `style?: React.CSSProperties`
 - `locale?: string` (default `en-US`)
 - `startWeekOnMonday?: boolean` (default `false`)
+- `yearRange?: number` (default `10`, years before and after current year)
+- `yearRangeBefore?: number` (custom years before current year)
+- `yearRangeAfter?: number` (custom years after current year)
 
 ## Development
 
